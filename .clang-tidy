@@ -1,0 +1,6 @@
+---
+Checks:          '*,-abseil-*, -altera-*,-android-*,-boost-*,-cert-*,-fuchsia-*,-google-*,-llvm*,-objc-*,-zircon-*,-cppcoreguidelines-avoid-magic-numbers,-modernize-use-trailing-return-type,-readability-magic-numbers,-readability-braces-around-statements, -hicpp-braces-around-statements, -portability-simd-intrinsics, -cppcoreguidelines-pro-bounds-pointer-arithmetic, -hicpp-uppercase-literal-suffix, -readability-uppercase-literal-suffix'
+WarningsAsErrors: ''
+HeaderFilterRegex: ''
+FormatStyle:     none
+
