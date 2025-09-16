@@ -1,7 +1,7 @@
 #include <iostream>
 
-#include "kc/Robot.hpp"
 #include "kc/CostFunction.hpp"
+#include "kc/Robot.hpp"
 #include "kc/types.hpp"
 #include "kc/utils.hpp"
 
@@ -32,10 +32,14 @@ int main(void)
         nullptr,
         a, alpha, d, theta);
 
-  // Wrap angles between -pi and pi
-  ceres::Manifold *angle_manifold = new ceres::EuclideanManifold<7>();
-  problem.SetManifold(alpha, angle_manifold);
-  problem.SetManifold(theta, angle_manifold);
+  // Wrap angles between 0 and 2*pi
+  for (std::size_t i{}; i < KUKA::value; ++i)
+  {
+    problem.SetParameterLowerBound(alpha, i, 0.);
+    problem.SetParameterLowerBound(theta, i, 0.);
+    problem.SetParameterUpperBound(alpha, i, 2.0 * ceres::constants::pi);
+    problem.SetParameterUpperBound(theta, i, 2.0 * ceres::constants::pi);
+  }
 
   ceres::Solver::Options options;
   options.minimizer_progress_to_stdout = true;
