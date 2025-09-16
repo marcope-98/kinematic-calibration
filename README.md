@@ -35,13 +35,13 @@ Since any homogeneous transformation $A_{j \ne i}$ does not depend on $\zeta_i$ 
 
 For the case where $j = i$ the following Jacobians wrt the DH parameters were considered (for my sanity I have omitted the subscript):
 
-$$\frac{\delta A}{\delta a} = \begin{bmatrix}0 & 0 & 0 & c_{\theta} \\\ 0 & 0 & 0 & s_{\theta} \\\ 0 & 0 & 0 & 0 \\\ 0 & 0 & 0 & 0\end{bmatrix}$$
-
-$$\frac{\delta A}{\delta \alpha} = \begin{bmatrix}0 & s_{\theta}s_{\alpha} & s_{\theta}c_{\alpha} & 0\\\0 & -c_{\theta}s_{\alpha} & -c_{\theta}c_{\alpha} & 0\\\0 & c_{\alpha} & -s_{\alpha} & 0\\\0 & 0 & 0 & 0\end{bmatrix}$$
-
-$$\frac{\delta A}{\delta d} = \begin{bmatrix}0 & 0 & 0 & 0 \\\ 0 & 0 & 0 & 0 \\\ 0 & 0 & 0 & 1 \\\ 0 & 0 & 0 & 0\end{bmatrix}$$
-
-$$\frac{\delta A}{\delta \theta} = \begin{bmatrix}-s_{\theta} & -c_{\theta}c_{\alpha} & c_{\theta}s_{\alpha} & -as_{\theta}\\\ c_{\theta} & -s_{\theta}c_{\alpha} & s_{\theta}s_{\alpha} & ac_{\theta} \\\ 0 & 0 & 0 & 0 \\\ 0 & 0 & 0 & 0\end{bmatrix}$$
+$$\frac{\delta A}{\delta a} = \begin{bmatrix}0 & 0 & 0 & c_{\theta} \\\ 0 & 0 & 0 & s_{\theta} \\\ 0 & 0 & 0 & 0 \\\ 0 & 0 & 0 & 0\end{bmatrix}
+\qquad
+\frac{\delta A}{\delta \alpha} = \begin{bmatrix}0 & s_{\theta}s_{\alpha} & s_{\theta}c_{\alpha} & 0\\\0 & -c_{\theta}s_{\alpha} & -c_{\theta}c_{\alpha} & 0\\\0 & c_{\alpha} & -s_{\alpha} & 0\\\0 & 0 & 0 & 0\end{bmatrix}
+\qquad
+\frac{\delta A}{\delta d} = \begin{bmatrix}0 & 0 & 0 & 0 \\\ 0 & 0 & 0 & 0 \\\ 0 & 0 & 0 & 1 \\\ 0 & 0 & 0 & 0\end{bmatrix}
+\qquad
+\frac{\delta A}{\delta \theta} = \begin{bmatrix}-s_{\theta} & -c_{\theta}c_{\alpha} & c_{\theta}s_{\alpha} & -as_{\theta}\\\ c_{\theta} & -s_{\theta}c_{\alpha} & s_{\theta}s_{\alpha} & ac_{\theta} \\\ 0 & 0 & 0 & 0 \\\ 0 & 0 & 0 & 0\end{bmatrix}$$
 
 ## Results
 
