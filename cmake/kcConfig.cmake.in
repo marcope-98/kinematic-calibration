@@ -1,0 +1,10 @@
+get_filename_component(KC_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+include(CMakeFindDependencyMacro)
+
+list(APPEND CMAKE_MODULE_PATH ${KC_CMAKE_DIR})
+
+if(NOT TARGET kc::kc)
+    include("${KC_CMAKE_DIR}/kcTargets.cmake")
+endif()
+
+set(KC_LIBRARIES kc::kc)
