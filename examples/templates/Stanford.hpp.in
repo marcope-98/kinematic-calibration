@@ -1,0 +1,7 @@
+#ifndef STANFORD_HPP_
+#define STANFORD_HPP_
+
+constexpr inline char P_Stanford[] = "@CMAKE_SOURCE_DIR@/data/P_Stanford.txt";
+constexpr inline char Q_Stanford[] = "@CMAKE_SOURCE_DIR@/data/Q_Stanford.txt";
+
+#endif // STANFORD_HPP_

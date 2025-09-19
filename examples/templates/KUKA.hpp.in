@@ -1,0 +1,7 @@
+#ifndef KUKA_HPP_
+#define KUKA_HPP_
+
+constexpr inline char P_KUKA[] = "@CMAKE_SOURCE_DIR@/data/P_KUKA.txt";
+constexpr inline char Q_KUKA[] = "@CMAKE_SOURCE_DIR@/data/Q_KUKA.txt";
+
+#endif // KUKA_HPP_

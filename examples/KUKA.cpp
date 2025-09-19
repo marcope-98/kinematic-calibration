@@ -14,8 +14,8 @@ int main(void)
   using KUKA = kc::Robot<kc::LR, kc::LR, kc::LR, kc::LR, kc::LR, kc::LR, kc::LR>;
 
   // Read data
-  const auto  xyz          = kc::read_xyz<kc::PositionVector>("../data/P_KUKA.txt");
-  const auto  joint_angles = kc::read_xyz<KUKA::JointAngles>("../data/Q_KUKA.txt");
+  const auto  xyz          = kc::read_xyz<kc::PositionVector>(P_KUKA);
+  const auto  joint_angles = kc::read_xyz<KUKA::JointAngles>(Q_KUKA);
   std::size_t training_set = std::size_t((double)xyz.size() * 0.8);
 
   // Define initial parameter blocks values

@@ -3,7 +3,7 @@
 C++17 project to explore the concept of Kinematic Calibration using Non-linear Least Square algorithms on real-world data gathered from a KUKA robot.
 Real World End-Effector position and Joint angles were obtained from here: [Kalibrot-KUKA](https://github.com/cursi36/Kalibrot/tree/master/RealRobotsData/KUKA_IIWA_LBR14).
 
-All the classes implemented are templated and are meant to function with every open chain robot manipulator composed of revolute joints (although they were only tested with a 7 DOF robot manipulator).
+All the classes implemented are templated and are meant to function with every open chain robot manipulator composed of revolute and prismatic joints.
 
 The Dataset was split in training set (80%) and validation set (20%). The initial conditions of the DH parameters were taken from the paper [Kalibrot-IEEE](https://ieeexplore.ieee.org/abstract/document/9635859)
 
@@ -42,6 +42,32 @@ $$\frac{\delta A}{\delta a} = \begin{bmatrix}0 & 0 & 0 & c_{\theta} \\\ 0 & 0 & 
 \frac{\delta A}{\delta d} = \begin{bmatrix}0 & 0 & 0 & 0 \\\ 0 & 0 & 0 & 0 \\\ 0 & 0 & 0 & 1 \\\ 0 & 0 & 0 & 0\end{bmatrix}
 \qquad
 \frac{\delta A}{\delta \theta} = \begin{bmatrix}-s_{\theta} & -c_{\theta}c_{\alpha} & c_{\theta}s_{\alpha} & -as_{\theta}\\\ c_{\theta} & -s_{\theta}c_{\alpha} & s_{\theta}s_{\alpha} & ac_{\theta} \\\ 0 & 0 & 0 & 0 \\\ 0 & 0 & 0 & 0\end{bmatrix}$$
+
+## Build
+
+```bash
+$ mkdir build && cd build
+$ cmake ..
+$ make
+```
+
+## Examples
+
+Three examples are provided in the example folder:
+- a 3 DOF planar robot composed of only revolute joints
+- a Stanford Manipulator (6 DOF)
+- a KUKA Robot
+
+Once the examples are built one can execute them by running the following shell command:
+```bash
+$ cd build
+$ ./examples/3R       # Runs the 3 DOF planar robot
+$ ...
+$ ./examples/Stanford # Runs the Stanford manipulator
+$ ...
+$ ./examples/KUKA     # Runs the KUKA robot
+```
+
 
 ## Results
 

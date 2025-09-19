@@ -1,0 +1,7 @@
+#ifndef THREE_HPP_
+#define THREE_HPP_
+
+constexpr inline char P_3R[] = "@CMAKE_SOURCE_DIR@/data/P_3R.txt";
+constexpr inline char Q_3R[] = "@CMAKE_SOURCE_DIR@/data/Q_3R.txt";
+
+#endif // THREE_HPP_

@@ -9,30 +9,31 @@ set(MIN_EIGEN_VERSION 3.4)
 find_package(Eigen3 ${MIN_EIGEN_VERSION} REQUIRED NO_MODULE)
 find_package(Ceres REQUIRED)
 add_library(${LIBRARY_NAME}
-  STATIC
-  src/Link.cpp
+  INTERFACE
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/kc/Link.hpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/kc/Robot.hpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/kc/CostFunction.hpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/kc/types.hpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/kc/utils.hpp
 )
 add_library(${LIBRARY_NAME}::${LIBRARY_NAME} ALIAS ${LIBRARY_NAME})
 
 target_include_directories(${LIBRARY_NAME}
-  PUBLIC
+  INTERFACE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
-  PRIVATE
-  ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
 target_compile_options(${LIBRARY_NAME}
-  PUBLIC
+  INTERFACE
   $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>>:
   -Wall -Wextra -Wpedantic -O2 -march=native >
 )
 
 target_link_libraries(${LIBRARY_NAME}
-  PUBLIC
+  INTERFACE
   Ceres::ceres
   Eigen3::Eigen
-  PRIVATE
 )
 
 include(GNUInstallDirs)
@@ -74,5 +75,4 @@ export(
 
 export(PACKAGE ${LIBRARY_NAME})
 
-add_executable(main main.cpp)
-target_link_libraries(main kc::kc Ceres::ceres)
+add_subdirectory(examples)

@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "KUKA.hpp"
+#include "3R.hpp"
 
 #include "kc/CostFunction.hpp"
 #include "kc/Robot.hpp"
@@ -11,31 +11,32 @@
 
 int main(void)
 {
-  using KUKA = kc::Robot<kc::LR, kc::LR, kc::LR, kc::LR, kc::LR, kc::LR, kc::LR>;
+  using threeR = kc::Robot<kc::LR, kc::LR, kc::LR>;
 
   // Read data
-  const auto  xyz          = kc::read_xyz<kc::PositionVector>("../data/P_KUKA.txt");
-  const auto  joint_angles = kc::read_xyz<KUKA::JointAngles>("../data/Q_KUKA.txt");
-  std::size_t training_set = std::size_t((double)xyz.size() * 0.8);
+  const auto  xyz          = kc::read_xyz<kc::PositionVector>(P_3R);
+  const auto  joint_angles = kc::read_xyz<threeR::JointAngles>(Q_3R);
+  std::size_t training_set = xyz.size();
 
   // Define initial parameter blocks values
   // clang-format off
-  double         a[]     = {      0,      0,      0,      0,      0,      0,     0 };
-  double         alpha[] = { M_PI_2, M_PI_2, M_PI_2, M_PI_2, M_PI_2, M_PI_2,     0 };
-  double         d[]     = {   0.34,      0,    0.4,      0,    0.4,      0, 0.126 };
-  double         theta[] = {   M_PI,   M_PI,      0,   M_PI,      0,   M_PI,     0 };
+  double         a[]     = {    0.9,    0.4,    1.9 };
+  double         alpha[] = {      0,      0,      0 };
+  double         d[]     = {      0,      0,      0 };
+  double         theta[] = {      0,      0,      0 };
   // clang-format on
-
   // Problem definition
   ceres::Problem problem;
   for (std::size_t i{}; i < training_set; ++i)
     problem.AddResidualBlock(
-        kc::CostFunction<KUKA>::create(joint_angles[i], xyz[i]),
+        kc::CostFunction<threeR>::create(joint_angles[i], xyz[i]),
         nullptr,
         a, alpha, d, theta);
 
   // Wrap angles between 0 and 2*pi
-  for (std::size_t i{}; i < KUKA::N; ++i)
+  problem.SetParameterBlockConstant(alpha);
+  problem.SetParameterBlockConstant(d);
+  for (std::size_t i{}; i < threeR::N; ++i)
   {
     problem.SetParameterLowerBound(a, i, 0.);
     problem.SetParameterLowerBound(alpha, i, 0.);
@@ -47,6 +48,7 @@ int main(void)
 
   ceres::Solver::Options options;
   options.minimizer_progress_to_stdout = true;
+  options.max_num_iterations           = 100;
 
   ceres::Solver::Summary summary;
   ceres::Solve(options, &problem, &summary);
@@ -54,14 +56,14 @@ int main(void)
   std::cout << "\n\n";
 
   // Summary of DH Parameters
-  kc::report<KUKA::N>(a, alpha, d, theta);
+  kc::report<threeR::N>(a, alpha, d, theta);
 
   // Basic statistics on validation set
   double rmse{};
   double L = double(xyz.size() - training_set);
   for (std::size_t i{training_set}; i < xyz.size(); ++i)
   {
-    kc::PositionVector tmp = KUKA::fk(a, alpha, d, theta, joint_angles[i]);
+    kc::PositionVector tmp = threeR::fk(a, alpha, d, theta, joint_angles[i]);
     kc::PositionVector error;
     error.x()   = tmp.x() - xyz[i].x();
     error.y()   = tmp.y() - xyz[i].y();
