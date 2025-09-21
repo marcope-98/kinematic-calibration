@@ -11,12 +11,12 @@ namespace kc
     Revolute
   };
 
-  constexpr static LinkType P = LinkType::Prismatic;
-  constexpr static LinkType R = LinkType::Revolute;
-
   template<LinkType LT>
   struct Link
   {
+    constexpr static auto is_revolute() -> bool { return LT == LinkType::Revolute; }
+    constexpr static auto is_prismatic() -> bool { return LT == LinkType::Prismatic; }
+
     [[nodiscard]] static auto jacobian(const double a, const double alpha,
                                        const double d, const double theta,
                                        const double      q,
@@ -37,7 +37,47 @@ namespace kc
       return out;
     }
 
-    [[nodiscard]] static auto transform(const double a, const double alpha, const double d, const double theta, const double q) -> TransformationMatrix;
+    [[nodiscard]] static auto transform(const double a, const double alpha, const double d, const double theta, const double q) -> TransformationMatrix
+    {
+      if constexpr (is_revolute())
+        return transform(a, alpha, d, theta + q);
+      else
+        return transform(a, alpha, d + q, theta);
+    }
+
+    [[nodiscard]] static auto delta_a(const double theta, const double q) -> TransformationMatrix
+    {
+      if constexpr (is_revolute())
+        return delta_a(theta + q);
+      else
+        return delta_a(theta);
+    }
+
+    [[nodiscard]] static auto delta_alpha(const double alpha, const double theta, const double q) -> TransformationMatrix
+    {
+      if constexpr (is_revolute())
+        return delta_alpha(alpha, theta + q);
+      else
+        return delta_alpha(alpha, theta);
+    }
+
+    [[nodiscard]] static auto delta_d() -> TransformationMatrix
+    {
+      return TransformationMatrix{{0, 0, 0, 0},
+                                  {0, 0, 0, 0},
+                                  {0, 0, 0, 1},
+                                  {0, 0, 0, 0}};
+    }
+
+    [[nodiscard]] static auto delta_theta(const double a, const double alpha, const double theta, const double q) -> TransformationMatrix
+    {
+      if constexpr (is_revolute())
+        return delta_theta(a, alpha, theta + q);
+      else
+        return delta_theta(a, alpha, theta);
+    }
+
+  private:
     [[nodiscard]] static auto transform(const double a, const double alpha, const double d, const double theta) -> TransformationMatrix
     {
       const double sin_alpha = std::sin(alpha), cos_alpha = std::cos(alpha);
@@ -50,7 +90,6 @@ namespace kc
       // clang-format on
     }
 
-    [[nodiscard]] static auto delta_a(const double theta, const double q) -> TransformationMatrix;
     [[nodiscard]] static auto delta_a(const double theta) -> TransformationMatrix
     {
       // clang-format off
@@ -61,7 +100,6 @@ namespace kc
       // clang-format on
     }
 
-    [[nodiscard]] static auto delta_alpha(const double alpha, const double theta, const double q) -> TransformationMatrix;
     [[nodiscard]] static auto delta_alpha(const double alpha, const double theta) -> TransformationMatrix
     {
       const double sin_alpha = std::sin(alpha), cos_alpha = std::cos(alpha);
@@ -74,15 +112,6 @@ namespace kc
       // clang-format on
     }
 
-    [[nodiscard]] static auto delta_d() -> TransformationMatrix
-    {
-      return TransformationMatrix{{0, 0, 0, 0},
-                                  {0, 0, 0, 0},
-                                  {0, 0, 0, 1},
-                                  {0, 0, 0, 0}};
-    }
-
-    [[nodiscard]] static auto delta_theta(const double a, const double alpha, const double theta, const double q) -> TransformationMatrix;
     [[nodiscard]] static auto delta_theta(const double a, const double alpha, const double theta) -> TransformationMatrix
     {
       const double sin_alpha = std::sin(alpha), cos_alpha = std::cos(alpha);
@@ -99,57 +128,5 @@ namespace kc
   using LP = Link<LinkType::Prismatic>;
   using LR = Link<LinkType::Revolute>;
 
-  // Specialization for Prismatic Link
-  template<>
-  [[nodiscard]] auto LP::transform(const double a, const double alpha, const double d, const double theta, const double q) -> TransformationMatrix
-  {
-    return LP::transform(a, alpha, d + q, theta);
-  }
-
-  template<>
-  [[nodiscard]] auto LP::delta_a(const double theta, const double q) -> TransformationMatrix
-  {
-    (void)q;
-    return LP::delta_a(theta);
-  }
-
-  template<>
-  [[nodiscard]] auto LP::delta_alpha(const double alpha, const double theta, const double q) -> TransformationMatrix
-  {
-    (void)q;
-    return LP::delta_alpha(alpha, theta);
-  }
-
-  template<>
-  [[nodiscard]] auto LP::delta_theta(const double a, const double alpha, const double theta, const double q) -> TransformationMatrix
-  {
-    (void)q;
-    return LP::delta_theta(a, alpha, theta);
-  }
-
-  // Specialization for Revolute Link
-  template<>
-  [[nodiscard]] auto LR::transform(const double a, const double alpha, const double d, const double theta, const double q) -> TransformationMatrix
-  {
-    return LR::transform(a, alpha, d, theta + q);
-  }
-
-  template<>
-  [[nodiscard]] auto LR::delta_a(const double theta, const double q) -> TransformationMatrix
-  {
-    return LR::delta_a(theta + q);
-  }
-
-  template<>
-  [[nodiscard]] auto LR::delta_alpha(const double alpha, const double theta, const double q) -> TransformationMatrix
-  {
-    return LR::delta_alpha(alpha, theta + q);
-  }
-
-  template<>
-  [[nodiscard]] auto LR::delta_theta(const double a, const double alpha, const double theta, const double q) -> TransformationMatrix
-  {
-    return LR::delta_theta(a, alpha, theta + q);
-  }
 } // namespace kc
 #endif // KC_LINK_HPP_
