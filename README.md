@@ -1,11 +1,11 @@
 # Kinematic Calibration
 
-C++17 project to explore the concept of Kinematic Calibration using Non-linear Least Square algorithms on real-world data gathered from a KUKA robot.
-Real World End-Effector position and Joint angles were obtained from here: [Kalibrot-KUKA](https://github.com/cursi36/Kalibrot/tree/master/RealRobotsData/KUKA_IIWA_LBR14).
+C++17 project to explore the concept of Kinematic Calibration using Non-linear Least Squares algorithms on real-world data gathered from a KUKA robot.
+Real World End-Effector positions and joint angles were obtained from here: [Kalibrot-KUKA](https://github.com/cursi36/Kalibrot/tree/master/RealRobotsData/KUKA_IIWA_LBR14).
 
-All the classes implemented are templated and are meant to function with every open chain robot manipulator composed of revolute and prismatic joints.
+All the classes implemented are templated and are meant to function with any open-chain robot manipulator composed of revolute and prismatic joints.
 
-The Dataset was split in training set (80%) and validation set (20%). The initial conditions of the DH parameters were taken from the paper [Kalibrot-IEEE](https://ieeexplore.ieee.org/abstract/document/9635859)
+The dataset was split in training set (80%) and validation set (20%). The initial conditions of the DH parameters were taken from the paper [Kalibrot-IEEE](https://ieeexplore.ieee.org/abstract/document/9635859)
 
 ## Dependencies
 - [ceres-solver 2.2.0](https://github.com/ceres-solver/ceres-solver)
@@ -14,7 +14,7 @@ The Dataset was split in training set (80%) and validation set (20%). The initia
 ## Theory
 Given a generic open-chain robot manipulator, the coordinate transformation between link $i-1$ and link $i$ can be systematically obtained using Denavit-Hartenberg parameters ($a$, $\alpha$, $d$, $\theta$).
 
-The resulting homogeneous transformation between link $i-1$ and $i$ can be obtained by concatenating two rotations and two translations which can be compactly written as:
+The resulting homogeneous transformation between link $i-1$ and $i$ can be obtained by concatenating two rotations and two translations, which can be compactly written as:
 
 $$A^{i-1}_i = 
 \begin{bmatrix} c_{\theta_i} & -s_{\theta_i} & 0 & 0 \\\ s_{\theta_i} & c_{\theta_i} & 0 & 0 \\\ 0 & 0 & 1 & d_i \\\ 0 & 0 & 0 & 1 \end{bmatrix} 
@@ -25,15 +25,15 @@ Concatenating the homogeneous transfoormations of each link yields the position 
 
 $$A = \prod_0^e A_{i-1}^i$$
 
-The Non-linear least square algorithm used requires the definition of the Jacobian of these transformations wrt the DH parameters. Let $n$ be the number of links of the robot manipulator and $r$ be the number of residuals, the Jacobian matrix is an $r \times 4n$ matrix.
+The non-linear least squares algorithm requires the definition of the Jacobian of these transformations wrt the DH parameters. Let $n$ be the number of links of the robot manipulator and $r$ be the number of residuals; the Jacobian matrix is an $r \times 4n$ matrix.
 
-Taking the expression above and differentiating it for the generic DH parameter $\zeta$ yields the following expression:
+Taking the expression above and differentiating it wrt the generic DH parameter $\zeta$ yields the following expression:
 
 $$\frac{\delta A}{\delta \zeta_i} = A_0 A_1 \dot{}\dot{}\dot{} \frac{\delta A_i}{\delta \zeta_i} \dot{}\dot{}\dot{} A_{i+1} A_{i+2} \dot{}\dot{}\dot{} A_{e}$$
 
-Since any homogeneous transformation $A_{j \ne i}$ does not depend on $\zeta_i$ its jacobian is a $4\times 4$ matrix of zeros, and it does not contribute to the overall jacobian.
+Since any homogeneous transformation $A_{j \ne i}$ does not depend on $\zeta_i$, its jacobian is a $4\times 4$ matrix of zeros and does not contribute to the overall jacobian.
 
-For the case where $j = i$ the following Jacobians wrt the DH parameters were considered (for my sanity I have omitted the subscript):
+For the case where $j = i$, the following Jacobians wrt the DH parameters were considered (for my sanity I have omitted the subscript):
 
 $$\frac{\delta A}{\delta a} = \begin{bmatrix}0 & 0 & 0 & c_{\theta} \\\ 0 & 0 & 0 & s_{\theta} \\\ 0 & 0 & 0 & 0 \\\ 0 & 0 & 0 & 0\end{bmatrix}
 \qquad
@@ -53,12 +53,12 @@ $ make
 
 ## Examples
 
-Three examples are provided in the example folder:
-- a 3 DOF planar robot composed of only revolute joints
+Three examples are provided in the `examples` folder:
+- a 3-DOF planar robot composed only of revolute joints
 - a Stanford Manipulator (6 DOF)
 - a KUKA Robot
 
-Once the examples are built one can execute them by running the following shell command:
+Once the examples are built, they can be execute using the following shell commands:
 ```bash
 $ cd build
 $ ./examples/3R       # Runs the 3 DOF planar robot
