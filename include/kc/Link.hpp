@@ -12,6 +12,9 @@ namespace kc
   };
 
   template<LinkType LT>
+  inline constexpr bool always_false_v = false;
+
+  template<LinkType LT>
   struct Link
   {
     constexpr static auto is_revolute() -> bool { return LT == LinkType::Revolute; }
@@ -41,24 +44,30 @@ namespace kc
     {
       if constexpr (is_revolute())
         return transform(a, alpha, d, theta + q);
-      else
+      else if constexpr (is_prismatic())
         return transform(a, alpha, d + q, theta);
+      else
+        static_assert(always_false_v<LT>, "Invalid LinkType");
     }
 
     [[nodiscard]] static auto delta_a(const double theta, const double q) -> TransformationMatrix
     {
       if constexpr (is_revolute())
         return delta_a(theta + q);
-      else
+      else if constexpr (is_prismatic())
         return delta_a(theta);
+      else
+        static_assert(always_false_v<LT>, "Invalid LinkType");
     }
 
     [[nodiscard]] static auto delta_alpha(const double alpha, const double theta, const double q) -> TransformationMatrix
     {
       if constexpr (is_revolute())
         return delta_alpha(alpha, theta + q);
-      else
+      else if constexpr (is_prismatic())
         return delta_alpha(alpha, theta);
+      else
+        static_assert(always_false_v<LT>, "Invalid LinkType");
     }
 
     [[nodiscard]] static auto delta_d() -> TransformationMatrix
@@ -73,8 +82,10 @@ namespace kc
     {
       if constexpr (is_revolute())
         return delta_theta(a, alpha, theta + q);
-      else
+      else if constexpr (is_prismatic())
         return delta_theta(a, alpha, theta);
+      else
+        static_assert(always_false_v<LT>, "Invalid LinkType");
     }
 
   private:
