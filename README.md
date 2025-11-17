@@ -12,24 +12,31 @@ The dataset was split in training set (80%) and validation set (20%). The initia
 - [Eigen 3.4.0](https://gitlab.com/libeigen/eigen)
 
 ## Theory
-Given a generic open-chain robot manipulator, the coordinate transformation between link $i-1$ and link $i$ can be systematically obtained using Denavit-Hartenberg parameters ($a$, $\alpha$, $d$, $\theta$).
+### What is Kinematic Calibration
+Kinematic calibration is the process by which the actual geometric parameters of a robot (its link lengths, joint offsets, twist angles, etc...) are estimated and corrected to reduce the difference between the modeled kinematics and the real-world behaviour of the robot. Even though many industrial robots are very repetable, their absolute accuracy can be poor if the model assumes ideal geometry. By calibrating, systematic deviations due to manufacturing tolerances, assembly errors, or wear can be identifier and corrected.
 
-The resulting homogeneous transformation between link $i-1$ and $i$ can be obtained by concatenating two rotations and two translations, which can be compactly written as:
+### Mathematical Modeling: DH Parameters
+The calibration relies on a precise mathematical description of the robot's kinematics. This project uses the Denavit-Hartenberg (DH) convention to represent the spatial relationships between consecutive robot links. For each joint/link $i$, four parameters fully define the transformation from link $i-1$ to $i$: link length ($a_i$), link twist ($\alpha_i$), link offset ($d_i$), and joint angle ($\theta_i$).
+
+Using these parameters, the homogeneous transformation matrix between link $i-1$ and $i$ can be obtained systematically as the matrix product of two rotations and two translations, which can be compactly written as:
 
 $$A^{i-1}_i = 
 \begin{bmatrix} c_{\theta_i} & -s_{\theta_i} & 0 & 0 \\\ s_{\theta_i} & c_{\theta_i} & 0 & 0 \\\ 0 & 0 & 1 & d_i \\\ 0 & 0 & 0 & 1 \end{bmatrix} 
 \begin{bmatrix} 1 & 0 & 0 & a_i \\\ 0 & c_{\alpha_i} & -s_{\alpha_i} & 0 \\\ 0 & s_{\alpha_i} & c_{\alpha_i} & 0 \\\ 0 & 0 & 0 & 1 \end{bmatrix} = 
 \begin{bmatrix} c_{\theta_i} & -s_{\theta_i}c_{\alpha_i} & s_{\theta_i}s_{\alpha_i} & a_ic_{\theta_i} \\\ s_{\theta_i} & c_{\theta_i}c_{\alpha_i} & -c_{\theta_i}s_{\alpha_i} & a_is_{\theta_i} \\\ 0 & s_{\alpha_i} & c_{\alpha_i} & d_i \\\ 0 & 0 & 0 & 1 \end{bmatrix}$$
 
-Concatenating the homogeneous transfoormations of each link yields the position and orientation of the end-effector:
+Concatenating the homogeneous transformations from the base to the end-effector gives the complete forward kinematic map:
 
-$$A = \prod_0^e A_{i-1}^i$$
+$$A = A_0^1 A_2^1 \dot{}\dot{}\dot{} A_e^{e-1} = \prod_0^e A_{i-1}^i$$
 
-The non-linear least squares algorithm requires the definition of the Jacobian of these transformations wrt the DH parameters. Let $n$ be the number of links of the robot manipulator and $r$ be the number of residuals; the Jacobian matrix is an $r \times 4n$ matrix.
+This representation allows the end-effector pose to be expressed in a compact and differentiable form with respect to the DH parameters, which is essential for optimization.
 
-Taking the expression above and differentiating it wrt the generic DH parameter $\zeta$ yields the following expression:
+### Error Modeling and Jacobian
+To calibrate, a residual is defined as the difference between measured end-effector poses and predicted poses from the forward kinematics model. A non-linear least squares problem is formulated to minimize the sum of squared residuals by adjusting the DH parameters. The Jacobian of the end-effector pose with respect to each DH parameter is used to guide the optimizer:
 
 $$\frac{\delta A}{\delta \zeta_i} = A_0 A_1 \dot{}\dot{}\dot{} \frac{\delta A_i}{\delta \zeta_i} \dot{}\dot{}\dot{} A_{i+1} A_{i+2} \dot{}\dot{}\dot{} A_{e}$$
+
+where $\zeta_i$ represents one of the DH parameters ($a_i$, $\alpha_i$, $d_i$, $\theta_i$). Analytic computation of the Jacobian ensures efficient and accurate gradient evaluation, which is critical for convergence in non-linear optimization.
 
 Since any homogeneous transformation $A_{j \ne i}$ does not depend on $\zeta_i$, its jacobian is a $4\times 4$ matrix of zeros and does not contribute to the overall jacobian.
 
@@ -43,6 +50,46 @@ $$\frac{\delta A}{\delta a} = \begin{bmatrix}0 & 0 & 0 & c_{\theta} \\\ 0 & 0 & 
 \qquad
 \frac{\delta A}{\delta \theta} = \begin{bmatrix}-s_{\theta} & -c_{\theta}c_{\alpha} & c_{\theta}s_{\alpha} & -as_{\theta}\\\ c_{\theta} & -s_{\theta}c_{\alpha} & s_{\theta}s_{\alpha} & ac_{\theta} \\\ 0 & 0 & 0 & 0 \\\ 0 & 0 & 0 & 0\end{bmatrix}$$
 
+### Optimization Method
+The calibration procedure is formulated as a nonlinear least-squares parameter estimation problem, where the objective is to identify the Denavit-Hartenberg parameters that best explain the measured end-effector poses obtained from the physical robot.
+
+Given a set of joint configurations $q_k$ and the corresponding measured end-effector poses $y_k$, the optimization seeks the parameter vector $p$ that minimizes the sum of squared residuals:
+
+$$\min_{p} \sum_{k=1}^{N} \left\lVert f(q_k, p) - y_k \right\rVert^2$$
+
+where $f(q_k, p)$ is the forward kinematic map constructed from the DH parameters.
+
+Because the forward kinematics model is nonlinear in the parameters, the resulting optimization problem is inherently nonlinear and must be solved with iterative numerical methods.
+
+### Trust-Region Methods
+
+The ceres-solver library uses trust-region optimization, tipically through the Levenber-Marquardt or Dogleg algorithms. These methods approximate the cost function locally by a quadratic model:
+
+$$m(\Delta p) = \frac{1}{2} J^TJ\Delta p + J^T r$$
+
+where $J$ is the Jacobian of the residual vector $r$. The update step $\Delta p$ is restricted to lie within a region where the quadratic model is considerable reliable:
+
+$$\left\lVert\Delta p \right\rVert \le \delta$$
+
+After each iteration, the trust-region radius is adapted based on how accurately the quadratic model predicts the reduction in the cost function.
+
+### Levenberg-Marquardt Algorithm
+
+The Levenberg-Marquardt (LM) algorithm blends Gauss-Newton and gradient descent methods. The update rule is given by:
+
+$$(J^T J + \lambda I) \Delta p = -J^T r$$
+
+where small $\lambda$ gives Gauss-Netwon behaviour (fast near solution), large $\lambda$ gives gradient descent behaviour (safe when far from solution).
+
+### Convergence Criteria
+
+The solver iteratively updates the parameter vector until convergence, which is defined by one or more of the following criteria:
+- Norm of the gradient is below a threshold
+- Change in parameter vector $\Delta p$ is negligible
+- Reduction in the cost function is sufficiently small
+
+This ensures that the final DH parameters provide the best-fit model of the measured data.
+
 ## Build
 
 ```bash
@@ -53,10 +100,45 @@ $ make
 
 ## Examples
 
-Three examples are provided in the `examples` folder:
-- a 3-DOF planar robot composed only of revolute joints
-- a Stanford Manipulator (6 DOF)
-- a KUKA Robot
+Three examples are provided in the `examples` folder, each with a different dataset:
+- a 3-DOF planar robot composed only of revolute joints. Synthetic data was generated by a [script](https://github.com/cursi36/Kalibrot/blob/master/tests/getData_3R.m), where Gaussian noise with standard deviation of $1e-1$ meters is added to the ground truth end effector position.
+
+<div align="center">
+   
+|joint| 1 | 2 | 3 |
+|:-:|:-:|:-:|:-:|
+|$d [m]$|0|0|0|
+|$\theta [rad]$|0|0|0|
+|$a [m]$|1|0.5|2|
+|$\alpha [rad]$|0|0|0|
+
+</div>
+
+- a Stanford Manipulator (6 DOF). Synthetic data was generated by a [script](https://github.com/cursi36/Kalibrot/blob/master/tests/getData_Stanford.m), where Gaussian noise with standard deviation of $1e-1$ meters is added to the ground truth end effector position. The ground truth values of the DH parameters for this manipulator are summarized in the following table
+
+<div align="center">
+   
+|joint| 1 | 2 | 3 | 4 | 5 | 6 |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+|$d [m]$|1|1.5|0|0.5|0|0.1|
+|$\theta [rad]$|$-\pi/2$|$\pi$|0|$-\pi/2$|$-\pi/2$|0|
+|$a [m]$|0|0|0|0|0|0|
+|$\alpha [rad]$|$-\pi/2$|$-\pi/2$|0|$\pi/2$|$-\pi/2$|0|
+
+</div>
+
+- a KUKA Robot. [Real-world data](https://github.com/cursi36/Kalibrot/tree/master/RealRobotsData/KUKA_IIWA_LBR14) collected from a KUKA manipulator with measured joint angles and end-effector positions.
+
+<div align="center">
+   
+|joint| 1 | 2 | 3 | 4 | 5 | 6 | 7 |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+|$d [m]$|0.36|0|0.42|0|0.4|0|0.126|
+|$\theta [rad]$|$\pi$|$\pi$|0|$\pi$|0|$\pi$|0|
+|$a [m]$|0|0|0|0|0|0|0|
+|$\alpha [rad]$|$\pi/2$|$\pi/2$|$\pi/2$|$\pi/2$|$\pi/2$|$\pi/2$|0|
+
+</div>
 
 Once the examples are built, they can be execute using the following shell commands:
 ```bash
@@ -68,8 +150,11 @@ $ ...
 $ ./examples/KUKA     # Runs the KUKA robot
 ```
 
-
 ## Results
+
+During optimization, the solver reports iteration, costm gradient norm, and step size. Furthermore dataset splitting allows quantification of generalization performance. After calibration, residual errors between predicted and measured end-effector poses are minimized, increasing forward kinematics accuracy.
+
+The following are the iteration results and the expected report visualized during the execution of the KUKA example:
 
 ```console
 iter      cost      cost_change  |gradient|   |step|    tr_ratio  tr_radius  ls_iter  iter_time  total_time
