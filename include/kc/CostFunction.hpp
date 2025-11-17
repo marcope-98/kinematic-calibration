@@ -11,7 +11,12 @@ namespace kc
   struct CostFunction : public ceres::SizedCostFunction<3, Robot::N, Robot::N, Robot::N, Robot::N>
   {
     CostFunction(const typename Robot::JointAngles &x, const PositionVector &y) : x_{x}, y_{y} {}
-    virtual ~CostFunction() {}
+    CostFunction(const CostFunction &) = default;
+    CostFunction(CostFunction &&)      = default;
+    CostFunction &operator=(const CostFunction &) = default;
+    CostFunction &operator=(CostFunction &&) = default;
+    virtual ~CostFunction()                  = default;
+
     virtual bool Evaluate(double const *const *parameters,
                           double *             residuals,
                           double **            jacobians) const
